@@ -4,7 +4,7 @@
 
 int main() {
     // read from input.txt
-    std::filesystem::path path = R"(D:\Projects\adventOfCode24\dayX\input.test)";
+    std::filesystem::path path = R"(D:\Projects\adventOfCode24\day10\input.test)";
     std::string content = utilities::readFromFile(path);
     auto result = utilities::split(content, std::string("   "));
 

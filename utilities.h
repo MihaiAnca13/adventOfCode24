@@ -10,6 +10,33 @@
 #include <vector>
 #include <algorithm>
 
+
+struct Vector2 {
+    int x;
+    int y;
+
+    bool operator==(const Vector2 &rhs) const {
+        return x == rhs.x && y == rhs.y;
+    }
+
+    struct Vector2 operator-(const Vector2 &rhs) const {
+        return {x - rhs.x, y - rhs.y};
+    }
+
+    struct Vector2 operator+(const Vector2 &rhs) const {
+        return {x + rhs.x, y + rhs.y};
+    }
+
+    [[nodiscard]] struct Vector2 abs() const {
+        return {std::abs(x), std::abs(y)};
+    }
+
+    struct Vector2 operator*(const int &rhs) const {
+        return {x * rhs, y * rhs};
+    }
+};
+
+
 namespace utilities {
     inline std::string readFromFile(const std::filesystem::path &path) {
         std::ifstream file(path);
@@ -28,6 +55,21 @@ namespace utilities {
         return content;
     }
 
+    template<typename T>
+    inline std::vector<T> split(const std::string &content, std::basic_string<char> delimiter) {
+        std::vector<T> result;
+        std::string token;
+        size_t pos = 0;
+        auto content_copy = content;
+        while ((pos = content_copy.find(delimiter)) != std::string::npos) {
+            token = content_copy.substr(0, pos);
+            result.push_back(token);
+            content_copy.erase(0, pos + delimiter.length());
+        }
+        result.push_back(content_copy);
+        return result;
+    }
+
     inline std::vector<std::vector<float>> split(const std::string &content, std::basic_string<char> delimiter) {
         // split content by \n
         std::vector<std::vector<float>> result;
@@ -36,7 +78,7 @@ namespace utilities {
         std::string row;
         std::string token;
         size_t pos = 0;
-        for (char i : content) {
+        for (char i: content) {
             if (i == '\n') {
                 // split row by delimiter
                 while ((pos = row.find(delimiter)) != std::string::npos) {
@@ -61,7 +103,7 @@ namespace utilities {
         std::vector<std::vector<std::string>> result;
         std::vector<std::string> row_values;
         // split row by each character
-        for (char i : content) {
+        for (char i: content) {
             if (i == '\n') {
                 result.push_back(row_values);
                 row_values.clear();
@@ -73,7 +115,21 @@ namespace utilities {
         return result;
     }
 
-    inline void sortColumns(std::vector<std::vector<float>>& matrix) {
+    inline std::vector<std::string> splitIntoRows(const std::string &content) {
+        std::vector<std::string> result;
+        std::string row;
+        for (char i: content) {
+            if (i == '\n') {
+                result.push_back(row);
+                row = "";
+            } else {
+                row += i;
+            }
+        }
+        return result;
+    }
+
+    inline void sortColumns(std::vector<std::vector<float>> &matrix) {
         if (matrix.empty() || matrix[0].empty()) return;
 
         size_t rows = matrix.size();
@@ -88,7 +144,7 @@ namespace utilities {
         }
 
         // Sort each "column" in the transposed matrix (row of original)
-        for (auto& row : transposed) {
+        for (auto &row: transposed) {
             std::sort(row.begin(), row.end());
         }
 
@@ -100,8 +156,9 @@ namespace utilities {
         }
     }
 
-    inline void printRow(std::vector<float> &row) {
-        for (auto &j : row) {
+    template<typename T>
+    inline void printRow(std::vector<T> &row) {
+        for (auto &j: row) {
             std::cout << j << " ";
         }
         std::cout << std::endl;
@@ -112,8 +169,8 @@ namespace utilities {
         if (!header.empty()) {
             std::cout << header << ": " << std::endl;
         }
-        for (auto &i : matrix) {
-            for (auto &j : i) {
+        for (auto &i: matrix) {
+            for (auto &j: i) {
                 std::cout << j << " ";
             }
             std::cout << std::endl;
@@ -122,9 +179,9 @@ namespace utilities {
 
     inline std::vector<std::string> matrixToString(std::vector<std::vector<std::string>> &matrix) {
         std::vector<std::string> result;
-        for (auto &i : matrix) {
+        for (auto &i: matrix) {
             std::string row;
-            for (auto &j : i) {
+            for (auto &j: i) {
                 row += j;
             }
             result.push_back(row);
@@ -134,7 +191,7 @@ namespace utilities {
 
     template<typename T>
     inline void reverseEachRow(std::vector<std::vector<T>> &matrix) {
-        for (auto &row : matrix) {
+        for (auto &row: matrix) {
             std::reverse(row.begin(), row.end());
         }
     }
@@ -158,6 +215,16 @@ namespace utilities {
             }
         }
 
+        return result;
+    }
+
+    template<typename T>
+    inline std::vector<std::vector<T>> emtpy_like(std::vector<std::vector<T>> &matrix) {
+        std::vector<std::vector<T>> result;
+        for (auto &row: matrix) {
+            std::vector<T> empty_row(row.size());
+            result.push_back(empty_row);
+        }
         return result;
     }
 }
