@@ -115,6 +115,19 @@ namespace utilities {
         return result;
     }
 
+    template<typename T>
+    inline std::vector<std::vector<T>> matrixToT(std::vector<std::vector<std::string>> &matrix) {
+        std::vector<std::vector<T>> result;
+        for (auto &i: matrix) {
+            std::vector<T> row;
+            for (auto &j: i) {
+                row.push_back(static_cast<T>(std::stof(j)));
+            }
+            result.push_back(row);
+        }
+        return result;
+    }
+
     inline std::vector<std::string> splitIntoRows(const std::string &content) {
         std::vector<std::string> result;
         std::string row;
