@@ -232,13 +232,24 @@ namespace utilities {
     }
 
     template<typename T>
-    inline std::vector<std::vector<T>> emtpy_like(std::vector<std::vector<T>> &matrix) {
+    inline std::vector<std::vector<T>> empty_like(std::vector<std::vector<T>> &matrix) {
         std::vector<std::vector<T>> result;
         for (auto &row: matrix) {
             std::vector<T> empty_row(row.size());
             result.push_back(empty_row);
         }
         return result;
+    }
+
+    inline int num_digits(uint64_t val) {
+        int num_digits = 0;
+        uint64_t temp = val;
+        while (temp) {
+            temp /= 10;
+            num_digits++;
+        }
+
+        return num_digits;
     }
 }
 

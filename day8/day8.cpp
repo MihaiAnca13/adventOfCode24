@@ -28,7 +28,7 @@ int main() {
         }
     }
 
-    auto antinodes = utilities::emtpy_like(result);
+    auto antinodes = utilities::empty_like(result);
     for (auto &freq: antennas) {
         for (int i = 0; i < freq.second.size(); i++) {
             for (int j = i + 1; j < freq.second.size(); j++) {

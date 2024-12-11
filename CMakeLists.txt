@@ -16,5 +16,7 @@ add_executable(adventOfCode24
 #        day8/day8.cpp
 #        day9/day9.cpp
 #        day9/day9p2.cpp
-         day10/day10.cpp
+#         day10/day10.cpp
+#         day11/day11.cpp
+         day11/day11p2.cpp
 )
