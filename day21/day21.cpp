@@ -2,7 +2,7 @@
 #include "../utilities.h"
 
 
-#define NR_ROBOTS 25
+int NR_ROBOTS = 25;
 
 
 /*
@@ -168,9 +168,40 @@ Movement generate_sequence(const Vector2 current, const Vector2 target, bool ord
 }
 
 
-std::vector<char> me(const std::vector<char> &sequence, GenerateSeqMemo &memo) {
+struct RobotInput {
+    Vector2 position{}, target{};
+    int robot_nr = 0;
+
+    bool operator==(const RobotInput &other) const {
+        return position == other.position && target == other.target && robot_nr == other.robot_nr;
+    }
+};
+
+struct RobotOutput {
+    uint64_t length = 0;
+    Vector2 position{};
+
+    bool operator==(const RobotOutput &other) const {
+        return length == other.length && position == other.position;
+    }
+};
+
+struct RobotHash {
+    std::size_t operator()(const RobotInput &input) const {
+        auto h1 = std::hash<Vector2>{}(input.position);
+        auto h2 = std::hash<Vector2>{}(input.target);
+        auto h3 = std::hash<int>{}(input.robot_nr);
+
+        return h1 ^ h2 ^ h3 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2);
+    }
+};
+
+typedef std::unordered_map<RobotInput, RobotOutput, RobotHash> RobotMemo;
+
+
+uint64_t me(const std::vector<char> &sequence, GenerateSeqMemo &memo) {
     Vector2 current_pos = directional_keypad['A'];
-    std::vector<char> final_sequence;
+    uint64_t length = 0;
     for (auto &c: sequence) {
         Movement res;
         res = generate_sequence(current_pos, directional_keypad[c], true, {0, 0}, memo);
@@ -179,87 +210,60 @@ std::vector<char> me(const std::vector<char> &sequence, GenerateSeqMemo &memo) {
             res = generate_sequence(current_pos, directional_keypad[c], false, {0, 0}, memo);
         }
 
-        if (!res.allowed) {
-            std::cout << "X should never happen" << std::endl;
-            return {'X'};
-        }
-
         current_pos = res.position;
-        for (auto &m: res.sequence) {
-            final_sequence.push_back(m);
-        }
+        length += res.sequence.size();
     }
 
-    return final_sequence;
+    return length;
 }
 
 
-struct RobotInput {
-    std::vector<char> sequence;
-    int robot_nr;
-
-    bool operator==(const RobotInput &other) const {
-        return sequence == other.sequence && robot_nr == other.robot_nr;
-    }
-};
-
-struct RobotHash {
-    std::size_t operator()(const RobotInput &input) const {
-        std::size_t hash = 0;
-        for (auto &c: input.sequence) {
-            hash ^= std::hash<char>{}(c) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-        }
-        hash ^= std::hash<int>{}(input.robot_nr) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-        return hash;
-    }
-};
-
-typedef std::unordered_map<RobotInput, std::vector<char>, RobotHash> RobotMemo;
-
-
-std::vector<char> robot(const std::vector<char> &sequence, int robot_nr, GenerateSeqMemo &memo, RobotMemo &robot_memo) {
+uint64_t robot(const std::vector<char> &sequence, int robot_nr, GenerateSeqMemo &memo, RobotMemo &robot_memo) {
     std::unordered_map<char, Vector2> keypad = directional_keypad;
+    Vector2 bad_position = {0, 0};
     if (robot_nr == 0) {
         keypad = numeric_keypad;
+        bad_position = {3, 0};
     } else if (robot_nr == NR_ROBOTS) {
         return me(sequence, memo);
     }
 
-    if (robot_nr > 0 && robot_memo.contains({sequence, robot_nr})) {
-        return robot_memo[{sequence, robot_nr}];
-    }
-
     Vector2 current_pos = keypad['A'];
-    std::vector<char> final_sequence;
+    uint64_t length = 0;
     for (auto &c: sequence) {
-        std::vector<char> new_sequence1, new_sequence2;
-        auto res1 = generate_sequence(current_pos, keypad[c], true, {3, 0}, memo);
-        if (res1.allowed) {
-            new_sequence1 = robot(res1.sequence, robot_nr + 1, memo, robot_memo);
-        }
-        auto res2 = generate_sequence(current_pos, keypad[c], false, {3, 0}, memo);
-        if (res2.allowed) {
-            new_sequence2 = robot(res2.sequence, robot_nr + 1, memo, robot_memo);
+        RobotInput input = {current_pos, keypad[c], robot_nr};
+        if (robot_memo.contains(input)) {
+            auto res = robot_memo[input];
+            current_pos = res.position;
+            length += res.length;
+            continue;
         }
 
-        if (!new_sequence1.empty() && (new_sequence1.size() < new_sequence2.size() || new_sequence2.empty())) {
+        uint64_t new_length1 = 0, new_length2 = 0;
+        auto res1 = generate_sequence(current_pos, keypad[c], true, bad_position, memo);
+        if (res1.allowed) {
+            new_length1 = robot(res1.sequence, robot_nr + 1, memo, robot_memo);
+        }
+        auto res2 = generate_sequence(current_pos, keypad[c], false, bad_position, memo);
+        if (res2.allowed) {
+            new_length2 = robot(res2.sequence, robot_nr + 1, memo, robot_memo);
+        }
+
+        RobotOutput output;
+        if (new_length1 != 0 && (new_length1 < new_length2 || new_length2 == 0)) {
             current_pos = res1.position;
-            for (auto &m: new_sequence1) {
-                final_sequence.push_back(m);
-            }
+            length += new_length1;
+            output = {new_length1, current_pos};
         } else {
             current_pos = res2.position;
-            for (auto &m: new_sequence2) {
-                final_sequence.push_back(m);
-            }
+            length += new_length2;
+            output = {new_length2, current_pos};
         }
+
+        robot_memo[input] = output;
     }
 
-    if (robot_nr > 0) {
-        robot_memo[{sequence, robot_nr}] = final_sequence;
-    }
-
-    return final_sequence;
+    return length;
 }
 
 
@@ -269,29 +273,34 @@ int main() {
     std::string content = utilities::readFromFile(path);
     auto result = utilities::split<std::string>(content, "\n");
 
-    uint64_t sum = 0;
-    for (auto &code: result) {
-        if (code.empty()) {
-            continue;
-        }
-        auto nr = std::stoi(code.substr(0, 3));
 
-        std::vector<char> code_char_v;
-        for (auto &c: code) {
-            code_char_v.push_back(c);
-        }
+    for (int n = 25; n < 26; n++) {
+        NR_ROBOTS = n;
 
-        GenerateSeqMemo memo{};
-        RobotMemo robot_memo{};
-        auto sequence = robot(code_char_v, 0, memo, robot_memo);
-        std::cout << "Code: " << code << " " << sequence.size() << ": " << nr * sequence.size() << std::endl;
+        uint64_t sum = 0;
+        for (auto &code: result) {
+            if (code.empty()) {
+                continue;
+            }
+            uint64_t nr = std::stoi(code.substr(0, 3));
+
+            std::vector<char> code_char_v;
+            for (auto &c: code) {
+                code_char_v.push_back(c);
+            }
+
+            GenerateSeqMemo memo{};
+            RobotMemo robot_memo{};
+            auto sequence_l = robot(code_char_v, 0, memo, robot_memo);
+//            std::cout << "Code: " << code << " " << sequence_l << ": " << nr * sequence_l << std::endl;
 
 //        utilities::printRow(sequence);
 //        break;
 
-        sum += nr * sequence.size();
-    }
+            sum += nr * sequence_l;
+        }
 
-    std::cout << "Sum: " << sum << std::endl; // 211930
+        std::cout << n << " sum: " << sum << std::endl; // 211930
+    }
     return 0;
 }
