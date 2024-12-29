@@ -36,7 +36,8 @@ add_executable(adventOfCode24
 #          day19/day19.cpp
 #          day20/day20.cpp
 #          day20/day20p2.cpp
-          day21/day21.cpp
+#          day21/day21.cpp
+          day22/day22.cpp
 )
 
 target_link_libraries(adventOfCode24 PRIVATE sfml-system sfml-network sfml-graphics sfml-window sfml-audio)
