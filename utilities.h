@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <climits>
 #include <cmath>
+#include <array>
 
 
 typedef std::vector<std::vector<std::string> > stringMatrix;
@@ -442,6 +443,13 @@ namespace utilities {
             }
         }
         return {-1, -1};
+    }
+
+    inline int factorial(int n) {
+        if (n == 0) {
+            return 1;
+        }
+        return n * factorial(n - 1);
     }
 }
 
