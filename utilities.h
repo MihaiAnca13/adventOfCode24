@@ -171,7 +171,9 @@ namespace utilities {
             result.push_back(token);
             content_copy.erase(0, pos + delimiter.length());
         }
-        result.push_back(content_copy);
+        if (!content_copy.empty()) {
+            result.push_back(content_copy);
+        }
         return result;
     }
 

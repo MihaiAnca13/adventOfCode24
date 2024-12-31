@@ -6,10 +6,10 @@ set(CMAKE_CXX_STANDARD 23)
 # SFML stuff
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
-find_package(SFML COMPONENTS system window graphics audio CONFIG REQUIRED)
+#find_package(SFML COMPONENTS system window graphics audio CONFIG REQUIRED)
 
 add_executable(adventOfCode24
-        graphics_utils.h
+#        graphics_utils.h
         utilities.h
 #        day1/day1.cpp
 #        day2/day2.cpp
@@ -39,7 +39,10 @@ add_executable(adventOfCode24
 #          day21/day21.cpp
 #          day22/day22.cpp
 #          day23/day23.cpp
-          day23/day23p2.cpp
+#          day23/day23p2.cpp
+#          day24/day24.cpp
+        day24/day24p2_not_mine.cpp
+        #          day25/day25.cpp
 )
 
-target_link_libraries(adventOfCode24 PRIVATE sfml-system sfml-network sfml-graphics sfml-window sfml-audio)
+#target_link_libraries(adventOfCode24 PRIVATE sfml-system sfml-network sfml-graphics sfml-window sfml-audio)
